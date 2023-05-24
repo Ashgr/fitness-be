@@ -2,8 +2,10 @@ from flask import Flask, request, jsonify
 from flask_sqlalchemy import SQLAlchemy
 from werkzeug.security import generate_password_hash, check_password_hash
 from flask_httpauth import HTTPBasicAuth
+from flask_cors import CORS  # Import the CORS class
 
 app = Flask(__name__)
+CORS(app)
 app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:////tmp/test.db'
 app.config['SECRET_KEY'] = 'thisisasecret'
 
@@ -67,10 +69,9 @@ def get_user(user_id):
         'email': user.email
     })
 
-@app.route('/api/users/<int:user_id>', methods=['PUT'])
-@auth.login_required
-def update_user(user_id):
-    user = User.query.get(user_id)
+@app.route('/api/users/<string:user_email>', methods=['POST'])
+def update_user(user_email):
+    user = User.query.filter_by(email=user_email).first()
     if not user:
         return jsonify({"message": "User not found"}), 404
     user.first_name = request.json.get('first_name', user.first_name)
@@ -81,6 +82,7 @@ def update_user(user_id):
     user.gender = request.json.get('gender', user.gender)
     db.session.commit()
     return jsonify({"message": "User updated"})
+
 
 @app.route('/api/users/<int:user_id>', methods=['DELETE'])
 @auth.login_required
@@ -122,7 +124,17 @@ def login():
 
     if user and user.check_password(password):
         # User authentication successful
-        return jsonify({'message': 'Login successful'}),200
+        user_data = {
+            'id': user.id,
+            'first_name': user.first_name,
+            'last_name': user.last_name,
+            'age': user.age,
+            'height': user.height,
+            'weight': user.weight,
+            'gender': user.gender,
+            'email': user.email,
+        }
+        return jsonify({'message': 'Login successful',"user":user_data}),200
     else:
         # User authentication failed
         return jsonify({'message': 'Invalid email or password'}),401
