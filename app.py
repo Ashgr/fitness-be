@@ -12,6 +12,12 @@ app.config['SECRET_KEY'] = 'thisisasecret'
 db = SQLAlchemy(app)
 auth = HTTPBasicAuth()
 
+class Message(db.Model):
+    id = db.Column(db.Integer, primary_key=True)
+    fullName = db.Column(db.String(50))
+    email = db.Column(db.String(50))
+    content = db.Column(db.String(512))
+
 class User(db.Model):
     id = db.Column(db.Integer, primary_key=True)
     first_name = db.Column(db.String(50))
@@ -69,7 +75,7 @@ def get_user(user_id):
         'email': user.email
     })
 
-@app.route('/api/users/<string:user_email>', methods=['POST'])
+@app.route('/api/users/<string:user_email>', methods=['PUT'])
 def update_user(user_email):
     user = User.query.filter_by(email=user_email).first()
     if not user:
@@ -138,6 +144,33 @@ def login():
     else:
         # User authentication failed
         return jsonify({'message': 'Invalid email or password'}),401
+
+
+@app.route('/api/message', methods=['POST'])
+def create_message():
+    message = Message()
+    message.fullName = request.json.get('fullName')
+    message.email = request.json.get('email')
+    message.content = request.json.get('message')
+
+    db.session.add(message)
+    db.session.commit()
+    return jsonify({"message": "Message created"}), 201
+
+@app.route('/api/messages', methods=['GET'])
+def get_messages():
+    messages = Message.query.all()
+    output = []
+    for message in messages:
+        message_data = {
+            'id': message.id,
+            'fullName': message.fullName,
+            'email': message.email,
+            'message': message.content,
+            # for security reasons, you should not expose the password hash
+        }
+        output.append(message_data)
+    return jsonify(output)
 
 if __name__ == '__main__':
     db.create_all()
