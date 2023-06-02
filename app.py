@@ -50,7 +50,7 @@ def send_email_notification(email, first_name, last_name):
     )
 
     try:
-        sendgrid_client = SendGridAPIClient(api_key='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')
+        sendgrid_client = SendGridAPIClient(api_key='')
         response = sendgrid_client.send(message)
         print(response.status_code)
         print(response.body)
