@@ -3,6 +3,9 @@ from flask_sqlalchemy import SQLAlchemy
 from werkzeug.security import generate_password_hash, check_password_hash
 from flask_httpauth import HTTPBasicAuth
 from flask_cors import CORS  # Import the CORS class
+import os
+from sendgrid import SendGridAPIClient
+from sendgrid.helpers.mail import Mail
 
 app = Flask(__name__)
 CORS(app)
@@ -36,6 +39,26 @@ class User(db.Model):
     def check_password(self, password):
         return check_password_hash(self.password_hash, password)
 
+
+
+def send_email_notification(email, first_name, last_name):
+    message = Mail(
+        from_email='nidalsh353@gmail.com',
+        to_emails=email,
+        subject='Registration Successful',
+        plain_text_content=f"Dear {first_name} {last_name},\n\nThank you for registering on our website."
+    )
+
+    try:
+        sendgrid_client = SendGridAPIClient(api_key='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')
+        response = sendgrid_client.send(message)
+        print(response.status_code)
+        print(response.body)
+        print(response.headers)
+    except Exception as e:
+        print(str(e))
+
+
 @auth.verify_password
 def verify_password(email, password):
     user = User.query.filter_by(email=email).first()
@@ -57,6 +80,9 @@ def create_user():
     user.set_password(request.json.get('password'))
     db.session.add(user)
     db.session.commit()
+
+    send_email_notification(user.email, user.first_name, user.last_name)
+
     return jsonify({"message": "User created"}), 201
 
 @app.route('/api/users/<int:user_id>', methods=['GET'])

@@ -4,3 +4,4 @@ SQLAlchemy==1.4.15
 Werkzeug==2.0.1
 Flask-HTTPAuth==4.4.0
 Flask-Cors==3.0.10
+sendgrid==6.0.0
